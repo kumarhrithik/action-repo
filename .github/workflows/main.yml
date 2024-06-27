@@ -1,0 +1,28 @@
+name: GitHub Actions Workflow
+
+on:
+  push:
+  pull_request:
+  merge:
+
+jobs:
+  webhook:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Send webhook event
+        run: |
+          $webhookUrl = "http://127.0.0.1:5000/"
+          $event = @{
+              action = "${{ github.event_name }}"
+              request_id = "${{ github.sha }}"
+              author = "${{ github.actor }}"
+              from_branch = "${{ github.event.pull_request.base.ref }}"
+              to_branch = "${{ github.ref_name }}"
+              timestamp = "${{ github.event.created_at }}"
+          }
+          $body = $event | ConvertTo-Json
+          Invoke-RestMethod -Uri $webhookUrl -Method Post -ContentType "application/json" -Body $body
